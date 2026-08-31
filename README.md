@@ -9,6 +9,8 @@ this repository were not modified.
 - `experiments/cbne_moment`: third-moment error scaling and sample-complexity plot.
 - `experiments/virtual_cooling`: virtual-cooling fidelity plot.
 - `experiments/cbne_observables`: ancilla-assisted observable estimates.
+  Its derived `tr(rho^3)` run and two-panel plot are documented in
+  `experiments/cbne_observables/RHO3_EXPERIMENT.md`.
 - `experiments/ptme`: PT-moment and entanglement-detection simulations and plots.
 - `reference/paper_figures`: exact PDFs used by the manuscript.
 - `reference/local_legacy`: archived outputs made from retained non-caption data.
