@@ -1,0 +1,11 @@
+* text=auto
+*.sh text eol=lf
+*.py text eol=lf
+*.cpp text eol=lf
+*.md text eol=lf
+*.csv text eol=lf
+*.jsonl text eol=lf
+*.pdf binary
+*.npy binary
+*.drawio binary
+*.svg text eol=lf

@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+experiments/*/figure/*.png
+experiments/*/figure/*.svg
+!experiments/ptme/figure/PTME.svg
+experiments/*/figures/*.png
+tmp/
