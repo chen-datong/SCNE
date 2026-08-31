@@ -1,7 +1,7 @@
 # SCNE3 numerical experiments
 
 This repository consolidates the code and retained data used by the eight
-active numerical figures in `paper/SCNE3.tex`.  Source directories outside
+active numerical figures in `paper/SCNE3.tex`. Source directories outside
 this repository were not modified.
 
 ## Layout
@@ -14,6 +14,7 @@ this repository were not modified.
 - `paper/SCNE3.tex`: the audited TeX source.
 - `FIGURE_MANIFEST.md`: figure-to-code mapping and reproduction status.
 - `REMOTE_AUDIT.md`: GitHub comparison and local-only updates.
+- `TMP_AUDIT.md`: comparison with the additional candidates under `../tmp`.
 
 ## Python setup
 
@@ -42,7 +43,7 @@ python reproduce_figures.py
 
 The C++ simulators use ITensor and retain their original build files/source.
 They are located under `experiments/cbne_moment/simulator` and
-`experiments/ptme/tensor_simulator`.  The processed inputs required for the
+`experiments/ptme/tensor_simulator`. The processed inputs required for the
 included plotting commands are already present, so ITensor is not required to
 redraw the figures.
 
@@ -57,13 +58,13 @@ redraw the figures.
 4. `Gibbs_ent_detect.pdf` uses 100 retained rows for the `N_U=100, NM=1000`
    subset, although the caption says 1000 independent trials.
 5. The manuscript `Depol_ent_detect.pdf` uses ten depolarizing probabilities
-   and shaded standard-deviation bands.  The remote code only has an older
-   five-point error-bar version.  The reconstructed function documents this;
-   `spread="sem"` is available if the caption's “standard error” wording is to
+   and shaded standard-deviation bands. The remote code only has an older
+   five-point error-bar version. The reconstructed function documents this;
+   `spread="sem"` is available if the caption's "standard error" wording is to
    be followed literally.
 
 ## Data policy
 
 This snapshot includes only data needed by the active plotting paths, rather
-than every raw simulation file from the three historical directories.  No file
+than every raw simulation file from the three historical directories. No file
 exceeds GitHub's 100 MB per-file limit.
