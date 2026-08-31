@@ -17,6 +17,10 @@ from scipy.stats import linregress
 from TFIM import build_tfim_pauli_sparse
 
 
+matplotlib.rcParams["font.sans-serif"] = "Times New Roman"
+matplotlib.rcParams["mathtext.fontset"] = "cm"
+
+
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 
@@ -133,7 +137,8 @@ def plot_rho3(errors, params, output_path):
     nu_values = [int(value) for value in params["right"]["N_U"]]
     nm_right = int(params["right"]["N_M"])
 
-    fig, axes = plt.subplots(2, 1, figsize=(5.6, 8.0))
+    # One vertical column extracted from the 2x3 manuscript layout.
+    fig, axes = plt.subplots(2, 1, figsize=(4.8, 8.0))
     blue = cm.Blues
     orange = cm.Oranges
     blue_colors = blue(np.linspace(0.25, 0.9, len(anc_left)))
@@ -154,11 +159,20 @@ def plot_rho3(errors, params, output_path):
         )
     axes[0].set_xscale("log")
     axes[0].set_yscale("log")
-    axes[0].set_ylim(5e-3, 5e0)
-    axes[0].set_xlabel(r"$N_M$", fontsize=22)
-    axes[0].set_ylabel("Statistical Error", fontsize=22)
+    axes[0].set_ylim(5e-3, 2e0)
+    axes[0].set_xlabel(r"$N_M$", fontsize=23)
+    axes[0].set_ylabel("Statistical Error", fontsize=23)
     axes[0].set_title(r"$\mathrm{tr}(\rho^3)$", fontsize=24, pad=8)
-    axes[0].legend(loc="lower left", fontsize=15, frameon=True)
+    axes[0].legend(
+        loc="lower left",
+        fontsize=15,
+        frameon=True,
+        borderpad=0.3,
+        labelspacing=0.35,
+        columnspacing=0.5,
+        handletextpad=0.3,
+        handlelength=1.2,
+    )
 
     fixed_nm = errors[errors["NM"] == nm_right].sort_values("anc")
     anc_values = fixed_nm["anc"].to_numpy(dtype=float)
@@ -196,10 +210,20 @@ def plot_rho3(errors, params, output_path):
     axes[1].set_yscale("log")
     axes[1].set_ylim(1e-3, 1e0)
     axes[1].set_xticks([0, 2, 4, 6, 8])
-    axes[1].set_xlabel(r"$n_a$", fontsize=22)
-    axes[1].set_ylabel("Statistical Error", fontsize=22)
+    axes[1].set_xlabel(r"$n_a$", fontsize=23)
+    axes[1].set_ylabel("Statistical Error", fontsize=23)
     point_legend = axes[1].legend(
-        point_handles, point_labels, loc="lower left", fontsize=15, frameon=True
+        point_handles,
+        point_labels,
+        loc="lower left",
+        fontsize=15,
+        frameon=True,
+        borderpad=0.3,
+        labelspacing=0.35,
+        columnspacing=0.5,
+        handletextpad=0.3,
+        handlelength=1.2,
+        bbox_to_anchor=(0, 0),
     )
     axes[1].add_artist(point_legend)
     axes[1].legend(
@@ -210,16 +234,20 @@ def plot_rho3(errors, params, output_path):
         fontsize=14,
         title_fontsize=14,
         frameon=True,
+        handletextpad=0.2,
+        handlelength=1.2,
+        borderpad=0.35,
+        bbox_to_anchor=(1.02, 1.03),
     )
 
     for axis in axes:
-        axis.tick_params(axis="both", which="both", direction="in", labelsize=18, pad=6)
+        axis.tick_params(axis="both", which="both", direction="in", labelsize=19, pad=6)
         axis.yaxis.set_major_formatter(formatter)
         axis.yaxis.set_minor_locator(ticker.NullLocator())
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.tight_layout(h_pad=1.0)
-    fig.savefig(output_path, format="pdf", bbox_inches="tight")
+    fig.tight_layout(h_pad=0.5)
+    fig.savefig(output_path, format="pdf")
     plt.close(fig)
 
 
