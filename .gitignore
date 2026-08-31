@@ -7,3 +7,5 @@ experiments/*/figure/*.png
 experiments/*/figure/*.svg
 experiments/*/figures/*.png
 tmp/
+experiments/virtual_cooling/spectra/heisenberg/*.npz
+experiments/virtual_cooling/data/heisenberg/*.csv

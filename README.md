@@ -8,6 +8,8 @@ this repository were not modified.
 
 - `experiments/cbne_moment`: third-moment error scaling and sample-complexity plot.
 - `experiments/virtual_cooling`: virtual-cooling fidelity plot.
+  The optional XXZ Heisenberg version is documented in
+  `experiments/virtual_cooling/HEISENBERG.md`.
 - `experiments/cbne_observables`: ancilla-assisted observable estimates.
   Its derived `tr(rho^3)` run and two-panel plot are documented in
   `experiments/cbne_observables/RHO3_EXPERIMENT.md`.
