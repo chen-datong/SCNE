@@ -36,12 +36,21 @@ def extract_arrays(df: pd.DataFrame, nA: int, nB: int, NM: int):
     return purity, third, fourth, fifth
 
 
-def extract_arrays_depol(df: pd.DataFrame, nA: int, nB: int, NM: int, dprob: float):
+def extract_arrays_depol(
+    df: pd.DataFrame,
+    nA: int,
+    nB: int,
+    NM: int,
+    dprob: float,
+    Nu: int = None,
+):
     """
     固定 nA, NM，返回四个 numpy 数组：
     purity, thirdM, fourthM, fifthM
     """
     sub = df[(df["nA"] == nA) & (df["nB"] == nB) & (df["NM"] == NM) & (df["dprob"] == dprob)]
+    if Nu is not None:
+        sub = sub[sub["Nu"] == Nu]
     if sub.empty:
         raise ValueError(f"No data for nA={nA}, nB={nB}, NM={NM}, dprob={dprob}")
 
@@ -199,18 +208,18 @@ def heisenberg_depol(nA, nB, NM, csv_path='heisenberg_dbasis_prob.csv'):
 def heisenberg_depol_paper(
     nA=11,
     nB=1,
-    NM=100,
-    csv_path="heisenberg_dbasis_prob.csv",
+    Nu=1,
+    NM=1_000_000,
+    csv_path="heisenberg_dbasis_prob_paper.csv",
     outpath="./figure/Depol_ent_detect.pdf",
-    spread="std",
+    spread="sem",
+    expected_trials=1000,
 ):
     """Reconstruct the full-range plot used in the SCNE3 manuscript.
 
-    The manuscript PDF uses p=0.0,...,0.9 and shaded bands.  The retained
-    legacy function above only plots p=0.3,...,0.7 with error bars.  The
-    visible band widths in the manuscript agree with one standard deviation,
-    even though the current caption calls them standard errors.  Set
-    ``spread='sem'`` to follow the caption literally instead.
+    The manuscript declares p=0.0,...,0.9, N_U=1, N_M=10^6, 1000 trials,
+    and standard-error bands.  Use explicit legacy arguments only when
+    auditing the previously retained manuscript PDF.
     """
     import os
 
@@ -220,8 +229,13 @@ def heisenberg_depol_paper(
 
     for p in ps:
         purity, third, fourth, fifth = extract_arrays_depol(
-            df, nA=nA, nB=nB, NM=NM, dprob=float(p)
+            df, nA=nA, nB=nB, Nu=Nu, NM=NM, dprob=float(p)
         )
+        if len(purity) != expected_trials:
+            raise ValueError(
+                f"Expected {expected_trials} trials for p={p}, nA={nA}, nB={nB}, "
+                f"N_U={Nu}, N_M={NM}; found {len(purity)}."
+            )
         values = {
             "D3": D3(purity, third),
             "D4": D4(purity, third, fourth),
@@ -292,4 +306,4 @@ def heisenberg_depol_paper(
 
 # exact_depolarize(11, 1, load_prefix='heisenberg/depol_nA11_nB1')
 if __name__ == '__main__':
-    heisenberg_depol(11, 1, 100, csv_path='heisenberg_dbasis_prob.csv')
+    heisenberg_depol_paper()

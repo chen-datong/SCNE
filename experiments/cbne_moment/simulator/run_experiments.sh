@@ -9,47 +9,40 @@ export OMP_NUM_THREADS=3
 export OPENBLAS_NUM_THREADS=3
 
 MAX_DIM=500
-S=1000
+S=100000000
 H=1.0
 P=0.20
 
-# 扫描的 depth 列表（你可以自己加）
-DEPTHS=(35)
-
-# 扫描的 sampleNum 列表
-NS=(8)
+# 论文 SE_vs_NM_and_n.pdf 右图：所有系统大小固定 N_M=10^8。
+NS=(5 8 11 14 17 20)
 
 # 每个条件重复次数
-REPEATS=1000
+REPEATS=5000
 
 # 输出目录
-OUTDIR="estimate_third"
+OUTDIR="../data/TIM_complete"
 mkdir -p $OUTDIR
 
 echo "Starting experiments..."
 echo ""
 
 
-for DEPTH in "${DEPTHS[@]}"
+for N in "${NS[@]}"
 do
-    echo "=== Running depth = $DEPTH ==="
-
-    for N in "${NS[@]}"
+    if (( N >= 17 )); then DEPTH=50; else DEPTH=35; fi
+    echo "=== Running N = $N, depth = $DEPTH, N_M = $S ==="
+    exp_id=0
+    for ((i=1; i<=REPEATS; i++))
     do
-        echo "  N = $N"
-        exp_id=0
-        for ((i=1; i<=REPEATS; i++))
-        do
-            ./main $N $DEPTH $S $MAX_DIM $P $H $exp_id 
-            ((exp_id++))
+        ./main $N $DEPTH $S $MAX_DIM $P $H $exp_id "$OUTDIR"
+        ((exp_id++))
 
-            if (( i % 500 == 0 )); then
-                echo "    progress: $i / $REPEATS"
-            fi
-        done
+        if (( i % 500 == 0 )); then
+            echo "    progress: $i / $REPEATS"
+        fi
     done
 done
 
 echo ""
 echo "ALL EXPERIMENTS FINISHED!"
-echo "Total experiments = $exp_id"
+echo "Total experiments = $((REPEATS * ${#NS[@]}))"

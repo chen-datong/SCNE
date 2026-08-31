@@ -173,7 +173,14 @@ def exact_depol_GHZ(nA, nB, sys="B", save_prefix: str = None, load_prefix: str =
     
     return ps_arr, ppt3s, D3s, D4s
 
-def gibbs_ent_detect(nA, nB, Nu, NM, csv_path='gibbs_dbasis.csv'):
+def gibbs_ent_detect(
+    nA=11,
+    nB=1,
+    Nu=100,
+    NM=1_000_000,
+    csv_path='gibbs_dbasis_paper.csv',
+    expected_trials=1000,
+):
     df = load_results_csv(csv_path)
     betas = np.array([0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5])
     # betas = np.array([1.0, 1.1, 1.2, 1.3, 1.4, 1.5])
@@ -183,6 +190,11 @@ def gibbs_ent_detect(nA, nB, Nu, NM, csv_path='gibbs_dbasis.csv'):
     B2_std = np.array([0] * 10, dtype=float)
     for i, beta in enumerate(betas):
         purity_tmp, third_tmp, fourth_tmp, fifth_tmp = extract_arrays_gibbs(df, nA=nA, nB=nB, Nu=Nu, NM=NM, beta=beta)
+        if len(purity_tmp) != expected_trials:
+            raise ValueError(
+                f"Expected {expected_trials} trials for beta={beta}, nA={nA}, "
+                f"nB={nB}, N_U={Nu}, N_M={NM}; found {len(purity_tmp)}."
+            )
         # print(np.shape(purity_tmp))
         PPT3 = ppt3(purity_tmp, third_tmp)
         b2 = B2(purity_tmp, third_tmp, fourth_tmp, fifth_tmp)
@@ -668,6 +680,7 @@ def plot_mae_t4_nA_convergence(
     file_pattern=r"mae_n*_p0.30.csv",
     nB=2,
     tail_points=5,
+    right_nm=10_000_000,
     left_nA_to_plot=(10, 14, 18),
     exclude_nA=(6,),
     left_max_nm=5e6,
@@ -699,10 +712,20 @@ def plot_mae_t4_nA_convergence(
         y4_arr = df["mae_t4"].to_numpy(dtype=float)
         y4_blk10_arr = df["mae_t4_blk10"].to_numpy(dtype=float) if "mae_t4_blk10" in df.columns else None
         y4_blk50_arr = df["mae_t4_blk50"].to_numpy(dtype=float) if "mae_t4_blk50" in df.columns else None
-        k = min(tail_points, len(y4_arr))
-        stable_error_t4 = float(np.mean(y4_arr[-k:]))
-        stable_error_t4_blk10 = float(np.mean(y4_blk10_arr[-k:])) if y4_blk10_arr is not None else np.nan
-        stable_error_t4_blk50 = float(np.mean(y4_blk50_arr[-k:])) if y4_blk50_arr is not None else np.nan
+        if right_nm is not None:
+            at_nm = df[df["sample"] == int(right_nm)]
+            if len(at_nm) != 1:
+                raise ValueError(
+                    f"Expected one N_M={right_nm} row in {csv_path.name}; found {len(at_nm)}."
+                )
+            stable_error_t4 = float(at_nm["mae_t4"].iloc[0])
+            stable_error_t4_blk10 = float(at_nm["mae_t4_blk10"].iloc[0]) if y4_blk10_arr is not None else np.nan
+            stable_error_t4_blk50 = float(at_nm["mae_t4_blk50"].iloc[0]) if y4_blk50_arr is not None else np.nan
+        else:
+            k = min(tail_points, len(y4_arr))
+            stable_error_t4 = float(np.mean(y4_arr[-k:]))
+            stable_error_t4_blk10 = float(np.mean(y4_blk10_arr[-k:])) if y4_blk10_arr is not None else np.nan
+            stable_error_t4_blk50 = float(np.mean(y4_blk50_arr[-k:])) if y4_blk50_arr is not None else np.nan
         traces.append((nA, df, stable_error_t4, stable_error_t4_blk10, stable_error_t4_blk50))
 
     traces = [x for x in traces if x[0] not in set(exclude_nA)]
@@ -849,7 +872,7 @@ if __name__ == '__main__':
     # plot_nA_dependence()
     # plot_converge_val()
     # plot_Nu_dependence()
-    # gibbs_ent_detect(nA=11, nB=1, Nu=100, NM=1000)
+    # gibbs_ent_detect()
     # plot_error_vs_nA_fixed_budget_exact_1x2()
     # plot_SE_nA_and_Nu()
     # plot_mae_t4_by_n()

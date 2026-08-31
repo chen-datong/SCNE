@@ -309,51 +309,6 @@ def depolarize(dA1, dA2, dB, prob, dprob):
 
 
 
-def estimate_negativity_moment_multiNM(
-    rho, nA, nB, Nu, NM_list, NM_max=None, t_min=2, t_max=5, dprob=0
-):
-    """
-    Run the protocol once with NM_max samples, and compute estimates at each NM in NM_list
-    by using the first NM samples (prefix), for all t in [t_min, t_max].
-
-    Optimized: Supports pure state vector input (rho as 1D array).
-    """
-    if nA < nB:
-        raise ValueError("Protocol requires nA >= nB.")
-    if t_min < 2 or t_max < t_min:
-        raise ValueError("Require 2 <= t_min <= t_max.")
-
-    # Detect if input is a state vector or density matrix
-    is_pure = (rho.ndim == 1)
-
-    # Cast rho to complex64 for memory efficiency
-    rho = rho.astype(np.complex64)
-    
-    nA1 = nA - nB
-    nA2 = nB
-
-    d_A1 = get_dims(nA1)
-    d_A2 = get_dims(nA2)
-    d_B  = get_dims(nB)
-    d_A = d_A1 * d_A2
-    
-    # Check consistency
-    if is_pure:
-        if rho.shape[0] != d_A * d_B: 
-             raise ValueError(f"State vector dim {rho.shape[0]} mismatch expected {d_A*d_B}")
-    else:
-        if rho.shape[0] != d_A * d_B: 
-             raise ValueError(f"Density matrix dim {rho.shape[0]} mismatch expected {d_A*d_B}")
-
-    # For mixed states, we still need old POVMs (slow path)
-    if not is_pure:
-        swap_povms = get_swap_test_povm_operators(d_A2, d_B)
-
-    NM_list = sorted(list(NM_list))
-    if NM_max is None:
-        NM_max = NM_list[-1]
-
-
 def random_unitary_complex64(N):
     """
     Generate a Haar-random unitary matrix of size N x N using complex64 directly.
@@ -383,7 +338,9 @@ def random_unitary_complex64(N):
     # Standard signature for cgeqrf is (qr, tau, info) if lwork is auto-computed
     
     # We let scipy handle lwork allocation (it's small compared to N^2)
-    qr_raw, tau, info = cgeqrf(Z, overwrite_a=True)
+    geqrf_result = cgeqrf(Z, overwrite_a=True)
+    qr_raw, tau = geqrf_result[:2]
+    info = geqrf_result[-1]
     if info < 0:
         raise ValueError(f"cgeqrf illegal value at argument {-info}")
     
@@ -397,7 +354,9 @@ def random_unitary_complex64(N):
     
     # 4. Generate Q (cungqr)
     # Overwrites qr_raw with Q
-    Q, work, info = cungqr(qr_raw, tau, overwrite_a=True)
+    ungqr_result = cungqr(qr_raw, tau, overwrite_a=True)
+    Q = ungqr_result[0]
+    info = ungqr_result[-1]
     if info < 0:
         raise ValueError(f"cungqr illegal value at argument {-info}")
     
@@ -471,10 +430,6 @@ def estimate_negativity_moment_multiNM(
     prefactor_by_t = {t: (d_A1 ** (t - 1)) * (d_A2 ** t) for t in t_values}
     per_q_estimates_by_t = {t: {NM: [] for NM in NM_list} for t in t_values}
 
-    # Pre-allocate checkpoints set for fast lookup
-    checkpoints = set(np.array(NM_list) * (d_A1 * d_A2 * d_B)) 
-    d_total = d_A1 * d_A2 * d_B
-
     for q in range(Nu):
         # 1. Generate Random Unitary on A
         # Use custom generator for complex64
@@ -542,35 +497,27 @@ def estimate_negativity_moment_multiNM(
         if dprob > 0:
             probabilities = depolarize(d_A1, d_A2, d_B, probabilities, dprob)
 
-        # sample NM_max * d individual outcomes
-        outcomes_idx = np.random.choice(K, size=NM_max * d_total, p=probabilities)
-
-        # cumulative counts for each b: plus/minus
+        # Draw exactly N_M outcomes.  Multinomial increments preserve the
+        # prefix distribution while avoiding an O(N_M) Python loop.
         n_plus  = np.zeros(num_b_outcomes, dtype=np.int64)
         n_minus = np.zeros(num_b_outcomes, dtype=np.int64)
+        previous_nm = 0
 
-        for i, idx in enumerate(outcomes_idx, start=1):
-            b = idx % num_b_outcomes
-            r_idx = idx // num_b_outcomes  # 0 -> +1 (Sym), 1 -> -1 (Asym)
+        for NM_cur in NM_list:
+            increment = np.random.multinomial(NM_cur - previous_nm, probabilities)
+            n_plus += increment[:num_b_outcomes]
+            n_minus += increment[num_b_outcomes:]
+            previous_nm = NM_cur
 
-            if r_idx == 0:
-                n_plus[b] += 1
-            else:
-                n_minus[b] += 1
+            for t in t_values:
+                denom = math.comb(NM_cur, t) if NM_cur >= t else 0
+                if denom == 0:
+                    M_neg_q_t = 0.0
+                else:
+                    total_sum_t = _total_sum_from_counts(n_plus, n_minus, t)
+                    M_neg_q_t = prefactor_by_t[t] * (total_sum_t / denom)
 
-            if i in checkpoints:
-                NM_cur = i               # equals NM*d at checkpoint
-                NM_key = int(NM_cur / d_total) # back to NM
-
-                for t in t_values:
-                    denom = math.comb(NM_cur, t) if NM_cur >= t else 0
-                    if denom == 0:
-                        M_neg_q_t = 0.0
-                    else:
-                        total_sum_t = _total_sum_from_counts(n_plus, n_minus, t)
-                        M_neg_q_t = prefactor_by_t[t] * (total_sum_t / denom)
-
-                    per_q_estimates_by_t[t][NM_key].append(M_neg_q_t)
+                per_q_estimates_by_t[t][NM_cur].append(M_neg_q_t)
 
     # average over unitaries
     final_by_t = {
@@ -595,7 +542,15 @@ def _worker_heisenberg(args):
     return [[final_by_t[t][NM] for NM in NM_list] for t in t_list]
 
 
-def experiment_heisenberg_mp(nA, nB, Nu, repeat, dprob=0, csv_filename='heisenberg_dbasis_prob.csv'):
+def experiment_heisenberg_mp(
+    nA,
+    nB,
+    Nu,
+    repeat,
+    dprob=0,
+    csv_filename='heisenberg_dbasis_prob_paper.csv',
+    NM_list=None,
+):
     d_A = get_dims(nA)
     d_B = get_dims(nB)
     dim_total = d_A * d_B
@@ -605,7 +560,7 @@ def experiment_heisenberg_mp(nA, nB, Nu, repeat, dprob=0, csv_filename='heisenbe
     # rho_test = np.outer(psi, psi.conj()) 
     rho_test = psi
     
-    NM_list = [1, 2, 5, 10, 20, 50, 100]
+    NM_list = [1_000_000] if NM_list is None else sorted(int(x) for x in NM_list)
 
     # 一次同时算 t=2..5
     t_min, t_max = 2, 5

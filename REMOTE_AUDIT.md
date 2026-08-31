@@ -24,5 +24,7 @@ the following useful manuscript-era artifacts are local-only:
 - the full-range manuscript version of `Depol_ent_detect.pdf`.
 
 The tracked remote `heisenberg_plot.py` only produces the older five-point
-error-bar plot.  This repository adds `heisenberg_depol_paper()` to reconstruct
-the ten-point shaded manuscript plot from the retained CSV data.
+error-bar plot. This repository adds `heisenberg_depol_paper()` with the
+caption-declared ten-point range, `N_M=10^6`, 1000 trials, and standard-error
+bands. Explicit compatibility mode can still audit the retained PDF's
+standard-deviation rendering.

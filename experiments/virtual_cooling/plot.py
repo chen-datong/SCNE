@@ -1,4 +1,7 @@
+import argparse
+import json
 import os
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -107,6 +110,8 @@ def plot_virtual_cooling_fidelity_scatter(
     # error bars
     err_mode="std",   # "sem" | "ci95" | "std"
     outpath=None,
+    strict_inputs=True,
+    expected_trials=100,
 ):
     beta_list = [float(b) for b in beta_list]
 
@@ -114,17 +119,29 @@ def plot_virtual_cooling_fidelity_scatter(
     betas_est2, mean2, err2 = [], [], []
     betas_est3, mean3, err3 = [], [], []
 
+    missing_beta = []
     for beta in beta_list:
         try:
             df = load_df(n, Nu, NM, beta, data_dir=data_dir, beta_fmt=beta_fmt)
         except FileNotFoundError:
+            missing_beta.append(beta)
             continue
+        if len(df) != expected_trials:
+            raise ValueError(
+                f"Expected {expected_trials} trials for beta={beta}; found {len(df)}."
+            )
 
         m, e = mean_and_err(df["pf_rhoO2_fidelity"].to_numpy(), err_mode=err_mode)
         betas_est2.append(beta); mean2.append(m); err2.append(e)
 
         m, e = mean_and_err(df["pf_rhoO3_fidelity"].to_numpy(), err_mode=err_mode)
         betas_est3.append(beta); mean3.append(m); err3.append(e)
+
+    if strict_inputs and missing_beta:
+        raise FileNotFoundError(
+            f"Missing virtual-cooling data for beta={missing_beta}, "
+            f"n={n}, N_U={Nu}, N_M={NM}."
+        )
 
     # === load truth arrays (must align with beta_list order!) ===
     # 你保存的 npy 是单个 beta 一个文件；这里逐个 beta 读出标量真值
@@ -224,6 +241,7 @@ def plot_virtual_cooling_fidelity_scatter(
     hs_est2, mean2, err2 = [], [], []
     hs_est3, mean3, err3 = [], [], []
 
+    missing_h = []
     for ht in h_list:
         try:
             if ht == 0.5 or ht == 1.0 or ht == 1.5:
@@ -232,13 +250,24 @@ def plot_virtual_cooling_fidelity_scatter(
                 h_fmt_local = h_fmt
             df = load_df_h(n, Nu, NM, ht, data_dir=data_dir, h_fmt=h_fmt_local)
         except FileNotFoundError:
+            missing_h.append(ht)
             continue
+        if len(df) != expected_trials:
+            raise ValueError(
+                f"Expected {expected_trials} trials for h={ht}; found {len(df)}."
+            )
 
         m, e = mean_and_err(df["pf_rhoO2_fidelity"].to_numpy(), err_mode=err_mode)
         hs_est2.append(ht); mean2.append(m); err2.append(e)
 
         m, e = mean_and_err(df["pf_rhoO3_fidelity"].to_numpy(), err_mode=err_mode)
         hs_est3.append(ht); mean3.append(m); err3.append(e)
+
+    if strict_inputs and missing_h:
+        raise FileNotFoundError(
+            f"Missing virtual-cooling data for h={missing_h}, "
+            f"n={n}, N_U={Nu}, N_M={NM}."
+        )
 
     # === load truth arrays (must align with beta_list order!) ===
     truth_h, truth0, truth2, truth3 = [], [], [], []
@@ -292,22 +321,32 @@ def plot_virtual_cooling_fidelity_scatter(
 # Example usage
 # -------------------------
 if __name__ == "__main__":
-    n = 14
-    NM = 1000
-    Nu=1  # 或者 [1, 5, 10]
-    beta_list = [0.5, 0.8, 1.1, 1.4, 1.7, 2.0]
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--retained-data",
+        action="store_true",
+        help="redraw the historical PDF from files labelled N_M=1000",
+    )
+    args = parser.parse_args()
+    config_path = Path(__file__).resolve().parents[2] / "configs" / "paper_parameters.json"
+    params = json.loads(config_path.read_text(encoding="utf-8"))["figures"]["vcooling.pdf"]
+    n = params["n"]
+    NM = 1000 if args.retained_data else params["N_M"]
+    Nu = params["N_U"]
+    beta_list = params["left"]["beta"]
 
     plot_virtual_cooling_fidelity_scatter(
         n=n,
         Nu=Nu,
         NM=NM,
-        J=1.0,
-        h=1.0,
-        h_list=[0.5, 0.75, 1.0, 1.25, 1.5],
+        J=params["J"],
+        h=params["left"]["h"],
+        h_list=params["right"]["h"],
         beta_list=beta_list,
         data_dir="./data",
         h_fmt="{:.2f}",
         beta_fmt="{:.1f}",   
-        err_mode="std",
+        err_mode=params["error_band"],
+        expected_trials=params["trials"],
         outpath='./figure/vcooling.pdf'
     )

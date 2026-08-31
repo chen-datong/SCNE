@@ -11,8 +11,11 @@ this repository were not modified.
 - `experiments/cbne_observables`: ancilla-assisted observable estimates.
 - `experiments/ptme`: PT-moment and entanglement-detection simulations and plots.
 - `reference/paper_figures`: exact PDFs used by the manuscript.
+- `reference/local_legacy`: archived outputs made from retained non-caption data.
 - `paper/SCNE3.tex`: the audited TeX source.
 - `FIGURE_MANIFEST.md`: figure-to-code mapping and reproduction status.
+- `PARAMETERS.md`: manuscript parameter contract and data-coverage boundary.
+- `configs/paper_parameters.json`: machine-readable manuscript parameters.
 - `REMOTE_AUDIT.md`: GitHub comparison and local-only updates.
 - `TMP_AUDIT.md`: comparison with the additional candidates under `../tmp`.
 
@@ -25,7 +28,8 @@ python -m pip install -r requirements.txt
 ```
 
 Run each command from the listed experiment directory because the historical
-scripts use relative paths.
+scripts use relative paths. The default entry points enforce the parameters
+declared in the manuscript captions and stop when matching data are absent.
 
 ```powershell
 cd experiments\cbne_moment
@@ -41,27 +45,38 @@ cd ..\ptme
 python reproduce_figures.py
 ```
 
+The retained snapshot does not yet contain every strict parameter combination.
+Run `python scripts/check_paper_data.py --allow-missing` from the repository root
+to see the exact coverage. To redraw the historical manuscript figures from the
+retained non-caption data, pass `--retained-data` to the `cbne_moment`,
+`virtual_cooling`, or `ptme` entry point. This compatibility mode is explicit so
+that old data cannot be mistaken for caption-compliant data.
+Historical non-caption outputs are archived under `reference/local_legacy`
+rather than kept in the active experiment output directories.
+
 The C++ simulators use ITensor and retain their original build files/source.
 They are located under `experiments/cbne_moment/simulator` and
-`experiments/ptme/tensor_simulator`. The processed inputs required for the
-included plotting commands are already present, so ITensor is not required to
-redraw the figures.
+`experiments/ptme/tensor_simulator`. The processed inputs needed to redraw the
+historical PDFs are present. New simulations are required for the strict
+caption-parameter combinations listed in `PARAMETERS.md`.
 
-## Known manuscript/code differences
+## Retained-data differences
+
+The maintained default code now follows the manuscript parameter contract. The
+following statements describe only the older data retained for provenance:
 
 1. The exact `vcooling.pdf` was produced from files named with `NM=1000`, while
-   the manuscript caption says `N_M=10^6`.
+   the manuscript caption says `N_M=10^6`. New simulations use `N_M` as the
+   total number of outcomes rather than multiplying it by the Hilbert dimension.
 2. The right panel of `SE_vs_NM_and_n.pdf` does not use a single fixed
    `N_M=10^8` for every system size.
-3. The right panel of `SE_vs_NM_and_nA.pdf` averages the last five sample-size
-   points rather than selecting only `N_M=10^7`.
+3. The historical right panel of `SE_vs_NM_and_nA.pdf` averages the last five
+   sample-size points. The default code now selects exactly `N_M=10^7`.
 4. `Gibbs_ent_detect.pdf` uses 100 retained rows for the `N_U=100, NM=1000`
    subset, although the caption says 1000 independent trials.
-5. The manuscript `Depol_ent_detect.pdf` uses ten depolarizing probabilities
-   and shaded standard-deviation bands. The remote code only has an older
-   five-point error-bar version. The reconstructed function documents this;
-   `spread="sem"` is available if the caption's "standard error" wording is to
-   be followed literally.
+5. The manuscript `Depol_ent_detect.pdf` visibly uses standard-deviation bands,
+   although its caption says standard error. The default code now uses standard
+   error; compatibility mode retains the historical standard-deviation rendering.
 
 ## Data policy
 

@@ -431,37 +431,27 @@ def estimate_negativity_moment_multiNM(
         probabilities /= probabilities.sum()
         probabilities = depolarize(d_A1, d_A2, d_B, probabilities, dprob)
 
-        # sample NM_max * d individual outcomes
-        outcomes_idx = np.random.choice(K, size=NM_max * d, p=probabilities)
-
-        # cumulative counts for each b: plus/minus
+        # Draw exactly N_M outcomes.  Multinomial increments preserve the
+        # prefix distribution while avoiding an O(N_M) Python loop.
         n_plus  = np.zeros(num_b_outcomes, dtype=np.int64)
         n_minus = np.zeros(num_b_outcomes, dtype=np.int64)
+        previous_nm = 0
 
-        checkpoints = set(np.array(NM_list) * d)
+        for NM_cur in NM_list:
+            increment = np.random.multinomial(NM_cur - previous_nm, probabilities)
+            n_plus += increment[:num_b_outcomes]
+            n_minus += increment[num_b_outcomes:]
+            previous_nm = NM_cur
 
-        for i, idx in enumerate(outcomes_idx, start=1):
-            b = idx % num_b_outcomes
-            r_idx = idx // num_b_outcomes  # 0 -> +1, 1 -> -1
+            for t in t_values:
+                denom = math.comb(NM_cur, t) if NM_cur >= t else 0
+                if denom == 0:
+                    M_neg_q_t = 0.0
+                else:
+                    total_sum_t = _total_sum_from_counts(n_plus, n_minus, t)
+                    M_neg_q_t = prefactor_by_t[t] * (total_sum_t / denom)
 
-            if r_idx == 0:
-                n_plus[b] += 1
-            else:
-                n_minus[b] += 1
-
-            if i in checkpoints:
-                NM_cur = i               # equals NM*d at checkpoint
-                NM_key = int(NM_cur / d) # back to NM
-
-                for t in t_values:
-                    denom = math.comb(NM_cur, t) if NM_cur >= t else 0
-                    if denom == 0:
-                        M_neg_q_t = 0.0
-                    else:
-                        total_sum_t = _total_sum_from_counts(n_plus, n_minus, t)
-                        M_neg_q_t = prefactor_by_t[t] * (total_sum_t / denom)
-
-                    per_q_estimates_by_t[t][NM_key].append(M_neg_q_t)
+                per_q_estimates_by_t[t][NM_cur].append(M_neg_q_t)
 
     # average over unitaries
     final_by_t = {
@@ -552,14 +542,22 @@ def _worker_heisenberg(args):
     return [[final_by_t[t][NM] for NM in NM_list] for t in t_list]
 
 
-def experiment_heisenberg_mp(nA, nB, Nu, repeat, dprob=0, csv_filename='heisenberg_dbasis_prob.csv'):
+def experiment_heisenberg_mp(
+    nA,
+    nB,
+    Nu,
+    repeat,
+    dprob=0,
+    csv_filename='heisenberg_dbasis_prob_paper.csv',
+    NM_list=None,
+):
     d_A = get_dims(nA)
     d_B = get_dims(nB)
     dim_total = d_A * d_B
 
     psi = np.load(f"./heisenberg/heisenberg_N{nA+nB}_Jz1.0.npy")
     rho_test = np.outer(psi, psi.conj())
-    NM_list = [1, 2, 5, 10, 20, 50, 100]
+    NM_list = [1_000_000] if NM_list is None else sorted(int(x) for x in NM_list)
 
     # 一次同时算 t=2..5
     t_min, t_max = 2, 5
@@ -595,11 +593,19 @@ def _worker_gibbs(args):
     # shape: (len(t_list), len(NM_list))
     return [[final_by_t[t][NM] for NM in NM_list] for t in t_list]
 
-def experiment_gibbs_mp(nA, nB, Nu, repeat, beta, csv_filename='gibbs_dbasis.csv'):
+def experiment_gibbs_mp(
+    nA,
+    nB,
+    Nu,
+    repeat,
+    beta,
+    csv_filename='gibbs_dbasis_paper.csv',
+    NM_list=None,
+):
     d_A = get_dims(nA)
     d_B = get_dims(nB)
     rho = np.load(f"./gibbs/gibbs_N{nA+nB}_beta{beta:.2f}.npy")
-    NM_list = [1, 2, 5, 10, 20, 50, 100]
+    NM_list = [1_000_000] if NM_list is None else sorted(int(x) for x in NM_list)
 
     # 一次同时算 t=2..5
     t_min, t_max = 2, 5

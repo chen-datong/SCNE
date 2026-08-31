@@ -19,9 +19,8 @@ def estimate_rhot_dprob(rho, n, Nu, NM, t, dprob=0):
         rho_U = U @ rho @ U.conj().T
         prob = np.real(np.diag(rho_U))
         prob = prob * (1 - dprob) + dprob / d
-        outcomes_idx = np.random.choice(d, size=NM * d, p=prob)
-        counts = np.bincount(outcomes_idx, minlength=d)
-        denom = math.comb(NM * d, t) * d
+        counts = np.random.multinomial(NM, prob)
+        denom = math.comb(NM, t) * d
         numer = math.comb(d + t - 1, t) * math.factorial(t) 
         total = 0
         for count in counts:
@@ -40,9 +39,8 @@ def estimate_rhotO_dprob(rho, O, n, Nu, NM, t, dprob=0):
         O_U = U @ O @ U.conj().T
         prob = np.real(np.diag(rho_U))
         prob = prob * (1 - dprob) + dprob / d
-        outcomes_idx = np.random.choice(d, size=NM * d, p=prob)
-        counts = np.bincount(outcomes_idx, minlength=d)
-        denom = math.comb(NM * d, t) * d
+        counts = np.random.multinomial(NM, prob)
+        denom = math.comb(NM, t) * d
         numer = math.comb(d + t, t + 1) * math.factorial(t + 1) 
         total = 0
         for count, o_val in zip(counts, np.diag(O_U)):
@@ -62,11 +60,10 @@ def estimate_rhotAndrhotO_dprob(rho, O_list, n, Nu, NM, t, dprob=0):
         O_U_list = [U @ O @ U.conj().T for O in O_list]
         prob = np.real(np.diag(rho_U))
         prob = prob * (1 - dprob) + dprob / d
-        outcomes_idx = np.random.choice(d, size=NM * d, p=prob)
-        counts = np.bincount(outcomes_idx, minlength=d)
-        denom_rhot = math.comb(NM * d, t) * d
+        counts = np.random.multinomial(NM, prob)
+        denom_rhot = math.comb(NM, t) * d
         numer_rhot = math.comb(d + t - 1, t) * math.factorial(t) 
-        denom_rhotO = math.comb(NM * d, t) * d
+        denom_rhotO = math.comb(NM, t) * d
         numer_rhotO = math.comb(d + t, t + 1) * math.factorial(t + 1) 
         for count in counts:
             if count >= t:
@@ -89,12 +86,11 @@ def estimate_rhotAndrhotO_tlist_dprob(rho, O_list, n, Nu, NM, t_list, dprob=0):
         O_U_list = [U @ O @ U.conj().T for O in O_list]
         prob = np.real(np.diag(rho_U))
         prob = prob * (1 - dprob) + dprob / d
-        outcomes_idx = np.random.choice(d, size=NM * d, p=prob)
-        counts = np.bincount(outcomes_idx, minlength=d)
+        counts = np.random.multinomial(NM, prob)
         for t in t_list:
-            denom_rhot = math.comb(NM * d, t) * d
+            denom_rhot = math.comb(NM, t) * d
             numer_rhot = math.comb(d + t - 1, t) * math.factorial(t) 
-            denom_rhotO = math.comb(NM * d, t) * d
+            denom_rhotO = math.comb(NM, t) * d
             numer_rhotO = math.comb(d + t, t + 1) * math.factorial(t + 1) 
             for count in counts:
                 if count >= t:
@@ -362,17 +358,17 @@ def analyze_data_fidelity(filename):
     return results
 
 
-def main_experiment_gibbs(n, Nu, NM, rep, beta):
+def main_experiment_gibbs(n, Nu, NM, rep, beta, h=1.0, output_axis="beta"):
     d = pow(2, n)
     data = []
-    rho_test = np.load(f'./TFIM/tfim_gibbs_N{n}_beta{beta}_J1.0_h1.0.npy')
+    rho_test = np.load(f'./TFIM/tfim_gibbs_N{n}_beta{beta}_J1.0_h{h}.npy')
     O_list = []
-    psi0 = np.load(f'./TFIM/tfim_N{n}_gs_J1.0_h1.0.npy')
+    psi0 = np.load(f'./TFIM/tfim_N{n}_gs_J1.0_h{h}.npy')
     psib = np.outer(psi0, psi0.conj()) - np.eye(d, dtype=np.complex128) / d
     O_list.append(psib)
 
     for idx in tqdm(range(rep)):
-        purity, third_moment, pf_rhoO1, pf_rhoO2, pf_rhoO3 = experiment_single(n, rho_test, O_list, Nu, NM, 3, tmin=1, dprob=dprob)
+        purity, third_moment, pf_rhoO1, pf_rhoO2, pf_rhoO3 = experiment_single(n, rho_test, O_list, Nu, NM, 3, tmin=1, dprob=0)
         # 存储每条数据：idx, purity, third_moment, 以及两个可观测量的三个估计值
         data.append({
             'idx': idx,
@@ -386,7 +382,12 @@ def main_experiment_gibbs(n, Nu, NM, rep, beta):
     df = pd.DataFrame(data)
     
     # 保存文件，文件名包含 n, Nu, NM, dprob
-    filename = f"./data/fidelity_gibbs_n{n}_Nu{Nu}_NM{NM}_beta{beta}.csv"
+    if output_axis == "beta":
+        filename = f"./data/fidelity_gibbs_n{n}_Nu{Nu}_NM{NM}_beta{beta}.csv"
+    elif output_axis == "h":
+        filename = f"./data/fidelity_gibbs_n{n}_Nu{Nu}_NM{NM}_h{h}.csv"
+    else:
+        raise ValueError("output_axis must be 'beta' or 'h'")
     df.to_csv(filename, index=False)
     print(f"Results saved to {filename}")
     
@@ -394,14 +395,14 @@ def main_experiment_gibbs(n, Nu, NM, rep, beta):
 
 def _experiment_gibbs_wrapper(args):
     """多进程包装函数，用于 experiment_single 调用"""
-    n, Nu, NM, t, tmin, beta, idx = args
+    n, Nu, NM, t, tmin, beta, h, idx = args
     d = pow(2, n)
-    rho_test = np.load(f'./TFIM/tfim_gibbs_N{n}_beta{beta}_J1.0_h1.0.npy')
+    rho_test = np.load(f'./TFIM/tfim_gibbs_N{n}_beta{beta}_J1.0_h{h}.npy')
     O_list = []
-    psi0 = np.load(f'./TFIM/tfim_N{n}_gs_J1.0_h1.0.npy')
+    psi0 = np.load(f'./TFIM/tfim_N{n}_gs_J1.0_h{h}.npy')
     psib = np.outer(psi0, psi0.conj()) - np.eye(d, dtype=np.complex128) / d
     O_list.append(psib)
-    purity, third_moment, pf_rhoO1, pf_rhoO2, pf_rhoO3 = experiment_single(n, rho_test, O_list, Nu, NM, t, tmin=tmin, dprob=dprob)
+    purity, third_moment, pf_rhoO1, pf_rhoO2, pf_rhoO3 = experiment_single(n, rho_test, O_list, Nu, NM, t, tmin=tmin, dprob=0)
     return {
         'idx': idx,
         'purity': purity,
@@ -409,7 +410,16 @@ def _experiment_gibbs_wrapper(args):
         'pf_rhoO3_fidelity': pf_rhoO3[0]
     }
 
-def main_experiment_gibbs_parallel(n, Nu, NM, rep, beta=3.0, num_processes=None):
+def main_experiment_gibbs_parallel(
+    n,
+    Nu,
+    NM,
+    rep,
+    beta=3.0,
+    h=1.0,
+    output_axis="beta",
+    num_processes=None,
+):
     """并行版本的主实验函数，使用 multiprocessing
     
     参数:
@@ -428,7 +438,7 @@ def main_experiment_gibbs_parallel(n, Nu, NM, rep, beta=3.0, num_processes=None)
 
 
     # 准备参数列表
-    args_list = [(n, Nu, NM, 3, 1, beta, idx) for idx in range(rep)]
+    args_list = [(n, Nu, NM, 3, 1, beta, h, idx) for idx in range(rep)]
     
     # 使用多进程池执行实验
     with Pool(processes=num_processes) as pool:
@@ -438,7 +448,12 @@ def main_experiment_gibbs_parallel(n, Nu, NM, rep, beta=3.0, num_processes=None)
     df = pd.DataFrame(results)
     
     # 保存文件，文件名包含 n, Nu, NM, beta
-    filename = f"./data/fidelity_gibbs_n{n}_Nu{Nu}_NM{NM}_beta{beta}.csv"
+    if output_axis == "beta":
+        filename = f"./data/fidelity_gibbs_n{n}_Nu{Nu}_NM{NM}_beta{beta}.csv"
+    elif output_axis == "h":
+        filename = f"./data/fidelity_gibbs_n{n}_Nu{Nu}_NM{NM}_h{h}.csv"
+    else:
+        raise ValueError("output_axis must be 'beta' or 'h'")
     df.to_csv(filename, index=False)
     print(f"Results saved to {filename}")
     
@@ -447,13 +462,13 @@ def main_experiment_gibbs_parallel(n, Nu, NM, rep, beta=3.0, num_processes=None)
 
 
 if __name__ == "__main__":
-    n = 10
+    n = 14
     Nu = 1
-    NM = 1000
+    NM = 1_000_000
     rep = 100
     dprob = 0
     beta = 0.5
-    main_experiment_gibbs(n, Nu, NM, rep, beta)
+    main_experiment_gibbs(n, Nu, NM, rep, beta, h=1.0, output_axis="beta")
     # main_experiment(n, Nu=1, NM=10000, rep=100, dprob=0.2)
     # analyze_results(f"./data/experiment_n{n}_Nu{Nu}_NM{NM}_dprob{dprob}.csv")
     analyze_data_fidelity(f"./data/fidelity_gibbs_n{n}_Nu{Nu}_NM{NM}_beta{beta}.csv")

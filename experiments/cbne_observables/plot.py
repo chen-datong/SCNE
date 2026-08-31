@@ -1,4 +1,6 @@
 import os
+import json
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -381,7 +383,16 @@ def compute_and_save_exact_rho3O(n, beta, outpath=None):
     df.to_csv(outpath, index=False)
     return df
 
-def _collect_mae_for_observable(n, Nu, beta, observable, anc_list, nm_list, data_dir="./data"):
+def _collect_mae_for_observable(
+    n,
+    Nu,
+    beta,
+    observable,
+    anc_list,
+    nm_list,
+    data_dir="./data",
+    expected_trials=1000,
+):
     """
     Load per-(anc,NM) CSVs and compute MAE of rho3O estimates vs exact.
     Columns expected:
@@ -428,6 +439,10 @@ def _collect_mae_for_observable(n, Nu, beta, observable, anc_list, nm_list, data
                     break
             if df is None:
                 continue
+            if expected_trials is not None and len(df) != expected_trials:
+                raise ValueError(
+                    f"Expected {expected_trials} trials in {path}; found {len(df)}."
+                )
             col = col_map[observable]
             if col not in df.columns or "third_moment" not in df.columns:
                 continue
@@ -1133,6 +1148,8 @@ def plot_mae_vs_n(
 # Example usage
 # -------------------------
 if __name__ == "__main__":
+    config_path = Path(__file__).resolve().parents[2] / "configs" / "paper_parameters.json"
+    params = json.loads(config_path.read_text(encoding="utf-8"))["figures"]["SE_all_observables.pdf"]
     # n = 14
     # NM = 1000
     # Nu=1  # 或者 [1, 5, 10]
@@ -1184,13 +1201,13 @@ if __name__ == "__main__":
     #     logy=True,
     # )
     plot_four_observables_stat_error_2x4(
-    n=6,
-    Nu=1,
-    beta=2.0,
-    anc_left=(0, 4, 8),
-    anc_right=tuple(range(0, 9)),
-    nm_grid=(100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000),
-    nm_right=1000000,
+    n=params["n"],
+    Nu=params["left"]["N_U"],
+    beta=params["beta"],
+    anc_left=tuple(params["left"]["n_a"]),
+    anc_right=tuple(params["right"]["n_a"]),
+    nm_grid=tuple(params["left"]["N_M"]),
+    nm_right=params["right"]["N_M"],
     data_dir="./data",
     outpath="./figure/SE_all_observables.pdf",
     )

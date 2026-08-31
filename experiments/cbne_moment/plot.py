@@ -37,8 +37,6 @@ def average_Ising(n, depth, sample, J, h, p, combine=1):
         data = [json.loads(line) for line in f if line.strip()]
     # if combine != 1:
     cat = 5000
-    if n == 20 and combine != 1:
-        cat = 500
     purity = np.array([d["Purity"] for d in data])[: cat] - 1
     thirdM = (np.array([d["F"] for d in data])[: cat] - 1 - 3 * purity) / 2
 
@@ -320,20 +318,20 @@ def depth_saturate():
     plt.show()
 
 
-def plot_Haar_N():
-    N = 1000000
+def plot_Haar_N(right_nm_by_n=None):
     ns = range(5, 21, 3)
+    if right_nm_by_n is None:
+        right_nm_by_n = {n: 100_000_000 for n in ns}
     J = h = 1.0
     p = 0.2
     errors1 = []
     errors10 = []
     errors50 = []
     for n in ns:
+        N = int(right_nm_by_n[n])
         if n == 17:
-            N = 15000000
             depth=50
         elif n == 20:
-            N = 100000500
             depth=50
         else:
             depth=35
@@ -485,10 +483,15 @@ def plot_Haar_N():
 SAMPLE_LOWER_CBNE = {12: 380, 13: 520, 14: 810, 15: 1480, 16: 2150, 17: 3500, 18: 5300, 19: 8500}
 SAMPLE_LOWER_PTME = {12: 460, 13: 750, 14: 1080, 15: 1840, 16: 2900, 17: 3500, 18: 6100, 19: 13000}
 
-def plot_sample_complexity_lower():
+def plot_sample_complexity_lower(nu=200, target_error=0.1, repetitions=50):
+    if (nu, target_error, repetitions) != (200, 0.1, 50):
+        raise ValueError(
+            "The retained lower-bound values only support the manuscript "
+            "parameters N_U=200, target_error=0.1, repetitions=50."
+        )
     blue = "#1f77b4"
     green = "#2ca02c"
-    scale_factor = 200
+    scale_factor = nu
 
     fig, axes = plt.subplots(1, 2, figsize=(10.2, 4.3), sharey=True)
 

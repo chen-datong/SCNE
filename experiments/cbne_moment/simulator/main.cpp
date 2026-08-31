@@ -422,17 +422,17 @@ void applyDepolarizationProb(std::vector<double> &probs, double p)
 
 
 
-unsigned long long choose3(std::size_t M)
+long double choose3(std::size_t M)
 {
-    if(M < 3) return 0ULL;
-    unsigned long long m = static_cast<unsigned long long>(M);
+    if(M < 3) return 0.0L;
+    long double m = static_cast<long double>(M);
     return m*(m-1)*(m-2)/6;
 }
 
-unsigned long long choose2(std::size_t M)
+long double choose2(std::size_t M)
 {
-    if (M < 2) return 0ULL;
-    unsigned long long m = static_cast<unsigned long long>(M);
+    if (M < 2) return 0.0L;
+    long double m = static_cast<long double>(M);
     return m * (m - 1) / 2;
 }
 
@@ -442,13 +442,14 @@ int
 main(int argc, char* argv[])
 {
     // 默认参数
-    int N        = 15;   // qubit 数
-    int depth    = 4;    // brickwork 深度
-    int nSamples = 50;   // 采样次数
-    int maxDim   = 300;  // 最大 bond dimension
-    double dprob = 0.0;
+    int N        = 8;         // qubit 数
+    int depth    = 35;        // brickwork 深度
+    int nSamples = 100000000; // 论文右图固定 N_M
+    int maxDim   = 500;       // 最大 bond dimension
+    double dprob = 0.2;
     double h = 1.0;
     int experiment_id = 0;  // 默认 0
+    std::string outputDir = "../data/TIM_complete";
 
     if(argc > 1) N        = std::stoi(argv[1]);
     if(argc > 2) depth    = std::stoi(argv[2]);
@@ -457,6 +458,7 @@ main(int argc, char* argv[])
     if(argc > 5) dprob    = std::stod(argv[5]);
     if(argc > 6) h        = std::stod(argv[6]);
     if(argc > 7) experiment_id = std::stoi(argv[7]);
+    if(argc > 8) outputDir = argv[8];
     // double J = 1.0;
     // for (N = 5; N < 10; N++){
     // auto sites = SpinHalf(N,{"ConserveQNs=",false});
@@ -504,23 +506,20 @@ main(int argc, char* argv[])
     // 使用同一个离散分布对象做多次采样
     std::discrete_distribution<std::size_t> dist(probs.begin(),probs.end());
 
-std::vector<std::size_t> checklist = {10, 25, 50};
-std::size_t d = 1 << N;
-// std::vector<std::size_t> checklist = {d, 2*d, 5*d, 10*d, 20*d, 50*d, 100*d};
-// std::vector<std::size_t> checklist = {50*d};
+std::vector<std::size_t> checklist = {static_cast<std::size_t>(nSamples)};
 std::size_t check_idx = 0; // 指向下一个要触发的 checklist 元素
 
 auto write_checkpoint = [&](std::size_t curSamples) -> int {
     // === 计算 sum_C3 ===
-    unsigned long long sum_C3 = 0ULL;
-    unsigned long long sum_C2 = 0ULL;
+    long double sum_C3 = 0.0L;
+    long double sum_C2 = 0.0L;
     for (std::size_t x = 0; x < dim; ++x) {
         sum_C3 += choose3(counts[x]);
         sum_C2 += choose2(counts[x]);
     }
 
-    long double S_ld = (long double)sum_C3;
-    long double S_nd = (long double)sum_C2;
+    long double S_ld = sum_C3;
+    long double S_nd = sum_C2;
     // d_ld = 2^N (long double for calculation)
     long double d_ld = powl(2.0L, (long double)N);
 
@@ -540,7 +539,7 @@ auto write_checkpoint = [&](std::size_t curSamples) -> int {
 
     // === 写入文件：nSamples 用 curSamples（也就是 s+1）===
     std::ostringstream oss;
-    oss << "TIM_complete/n" << N
+    oss << outputDir << "/n" << N
         << "_depth" << depth
         << "_J" << std::fixed << std::setprecision(2) << J
         << "_h" << std::fixed << std::setprecision(2) << h
