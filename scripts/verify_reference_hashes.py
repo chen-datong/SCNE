@@ -7,7 +7,6 @@ from pathlib import Path
 EXPECTED = {
     "SE_vs_NM_and_n.pdf": "16815bf1a2733e65129f7b9a2c6d1cec061258d413b3e31578cd71331d5c8911",
     "vcooling.pdf": "8679159296ca91bdfa0cb31ff3d74f25a814ac8738e4f268c0d2944fabdac448",
-    "PTME.pdf": "898b0e00b02be64f6fb421588c47d5f6735f65919dc67719e82a86055e8e3c1d",
     "sample_lower.pdf": "69c82583e01584941da11020a8f5e8f7a0112dd4af1f9595fdb82c286b70f18c",
     "SE_all_observables.pdf": "f468a4a56a4b9a6488c40d4a750b89ef2726cfadd04b36f6e75adcd1e372679e",
     "SE_vs_NM_and_nA.pdf": "a26a359eaa8fa6b7ead12bcd55a8d31f6445f437042dfaa1f97a2addccf74080",

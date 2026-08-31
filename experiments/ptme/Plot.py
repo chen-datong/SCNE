@@ -13,7 +13,6 @@ from XXZ import ppt_moments_from_rho, depolarize_state
 from utils import D3, D4, ppt3, B2, D5, D3ToD5_tfim_dprob
 from Gibbs import load_results_csv, extract_arrays_gibbs
 from heisenberg_plot import extract_arrays_depol
-from PIL import Image, ImageDraw, ImageFont
 
 matplotlib.rcParams["font.sans-serif"] = 'Times New Roman'
 matplotlib.rcParams["mathtext.fontset"] = 'cm'
@@ -604,44 +603,6 @@ def detecting_ent_tfim(csv_filename='processed_results2.csv'):
     plt.savefig('./figure/TFIM_detection_prob.svg')
     plt.show()
 
-def combine_picture():
-    image = Image.open('./PTME.pdf')
-    
-    # 加载matplotlib图形
-    plot_image = Image.open('./figure/TFIM_detection_prob.pdf')
-
-    # 获取图像尺寸
-    image_width, image_height = image.size
-    plot_width, plot_height = plot_image.size
-
-    # 创建一个新的画布，宽度为两个图像的宽度之和，高度为两者的最大高度
-    new_width = image_width + plot_width
-    new_height = max(image_height, plot_height)
-    combined_image = Image.new("RGB", (new_width, new_height))
-
-    # 将PDF图片和matplotlib图形粘贴到新的画布
-    combined_image.paste(image, (0, 0))
-    combined_image.paste(plot_image, (image_width, 0))
-
-    # 添加(a)标签和(b)标签
-    draw = ImageDraw.Draw(combined_image)
-
-    # 设置字体（这里使用默认字体，您可以选择更合适的字体）
-    try:
-        font = ImageFont.truetype("arial.ttf", 20)
-    except IOError:
-        font = ImageFont.load_default()
-
-    # 在PDF图像上添加 (a) 标签
-    draw.text((20, 20), "(a)", font=font, fill="black")
-    
-    # 在matplotlib图形上添加 (b) 标签
-    draw.text((image_width + 20, 20), "(b)", font=font, fill="black")
-
-    # 显示和保存拼接后的图像
-    combined_image.show()
-    combined_image.save("combined_image_with_labels.jpg")
-
 def plot_mae_t4_by_n(
     data_dir="./data",
     file_pattern=r"mae_n*_p0.30.csv",
@@ -894,4 +855,3 @@ if __name__ == '__main__':
     # plot_mae_t4_by_n()
     plot_mae_t4_nA_convergence(nB=2)
     # detecting_ent_tfim()
-    # combine_picture()

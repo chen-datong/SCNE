@@ -19,7 +19,7 @@ the following useful manuscript-era artifacts are local-only:
 
 - modified `Negativity2/Plot.py`;
 - `processed_results2.csv`;
-- the final `PTME.drawio`, `PTME.svg`, and `PTME.pdf` assets;
+- the final PTME protocol/composition assets (intentionally excluded from this numerical repository);
 - `SE_vs_NM_and_nA.pdf` and its `mae_n*_p0.30.csv` inputs;
 - the full-range manuscript version of `Depol_ent_detect.pdf`.
 

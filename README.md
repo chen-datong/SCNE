@@ -1,6 +1,6 @@
 # SCNE3 numerical experiments
 
-This repository consolidates the code and retained data used by the eight
+This repository consolidates the code and retained data used by the seven
 active numerical figures in `paper/SCNE3.tex`. Source directories outside
 this repository were not modified.
 
@@ -9,7 +9,7 @@ this repository were not modified.
 - `experiments/cbne_moment`: third-moment error scaling and sample-complexity plot.
 - `experiments/virtual_cooling`: virtual-cooling fidelity plot.
 - `experiments/cbne_observables`: ancilla-assisted observable estimates.
-- `experiments/ptme`: PT-moment, entanglement-detection, and PTME composition code.
+- `experiments/ptme`: PT-moment and entanglement-detection simulations and plots.
 - `reference/paper_figures`: exact PDFs used by the manuscript.
 - `paper/SCNE3.tex`: the audited TeX source.
 - `FIGURE_MANIFEST.md`: figure-to-code mapping and reproduction status.
@@ -68,3 +68,7 @@ redraw the figures.
 This snapshot includes only data needed by the active plotting paths, rather
 than every raw simulation file from the three historical directories. No file
 exceeds GitHub's 100 MB per-file limit.
+
+The non-numerical `PTME.pdf` protocol/composition figure is intentionally not
+included. Its standalone numerical entanglement-detection panel remains at
+`experiments/ptme/figure/TFIM_detection_prob.svg`.
