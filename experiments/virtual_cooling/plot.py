@@ -321,17 +321,13 @@ def plot_virtual_cooling_fidelity_scatter(
 # Example usage
 # -------------------------
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--retained-data",
-        action="store_true",
-        help="redraw the historical PDF from files labelled N_M=1000",
-    )
-    args = parser.parse_args()
+    argparse.ArgumentParser(
+        description="Regenerate the virtual-cooling figure using manuscript parameters."
+    ).parse_args()
     config_path = Path(__file__).resolve().parents[2] / "configs" / "paper_parameters.json"
     params = json.loads(config_path.read_text(encoding="utf-8"))["figures"]["vcooling.pdf"]
     n = params["n"]
-    NM = 1000 if args.retained_data else params["N_M"]
+    NM = params["N_M"]
     Nu = params["N_U"]
     beta_list = params["left"]["beta"]
 

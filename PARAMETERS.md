@@ -7,8 +7,8 @@ silently multiplied by the Hilbert-space dimension.
 
 The default reproduction entry points use the parameter values stated in the
 manuscript captions. They validate that matching data exist instead of silently
-substituting another parameter value. Historical PDFs can still be redrawn with
-the explicit `--retained-data` option in the three affected experiment modules.
+substituting another parameter value. There is no fallback or compatibility
+mode for historical non-caption data.
 
 ## Data that must be regenerated
 
@@ -20,10 +20,10 @@ required for the following caption-declared combinations:
 - `Gibbs_ent_detect.pdf`: `N_U=100`, `N_M=1000000`, and 1000 trials per beta;
 - `Depol_ent_detect.pdf`: `N_U=1`, `N_M=1000000`, and 1000 trials per noise value.
 
-The retained data are not relabelled. In compatibility mode they retain their
-original filenames and interpretation, and must not be cited as results from
-the caption-declared parameter combinations.
-Existing non-caption output PDFs are archived in `reference/local_legacy`.
+The retained data are not relabelled and must not be cited as results from the
+caption-declared parameter combinations. Existing non-caption output PDFs are
+archived in `reference/local_legacy`; maintained entry points do not consume
+them.
 
 ## Existing data already consistent with the captions
 
@@ -38,7 +38,8 @@ with that exact selection. The original manuscript PDF remains unchanged under
 `reference/paper_figures` and is expected to differ from the corrected output.
 
 Run `python scripts/check_paper_data.py` from the repository root to audit the
-current data coverage against the parameter contract.
+current data coverage against the parameter contract. See `RUN_REQUIRED.md` for
+the exact outstanding runs and their prerequisites.
 
 ## Caption-compliant generation entry points
 

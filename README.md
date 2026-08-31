@@ -15,6 +15,7 @@ this repository were not modified.
 - `paper/SCNE3.tex`: the audited TeX source.
 - `FIGURE_MANIFEST.md`: figure-to-code mapping and reproduction status.
 - `PARAMETERS.md`: manuscript parameter contract and data-coverage boundary.
+- `RUN_REQUIRED.md`: simulations still required, commands, and prerequisites.
 - `configs/paper_parameters.json`: machine-readable manuscript parameters.
 - `REMOTE_AUDIT.md`: GitHub comparison and local-only updates.
 - `TMP_AUDIT.md`: comparison with the additional candidates under `../tmp`.
@@ -47,20 +48,19 @@ python reproduce_figures.py
 
 The retained snapshot does not yet contain every strict parameter combination.
 Run `python scripts/check_paper_data.py --allow-missing` from the repository root
-to see the exact coverage. To redraw the historical manuscript figures from the
-retained non-caption data, pass `--retained-data` to the `cbne_moment`,
-`virtual_cooling`, or `ptme` entry point. This compatibility mode is explicit so
-that old data cannot be mistaken for caption-compliant data.
-Historical non-caption outputs are archived under `reference/local_legacy`
-rather than kept in the active experiment output directories.
+to see the exact coverage, and see `RUN_REQUIRED.md` for the commands that still
+need to be run. Maintained entry points accept only the manuscript parameter
+contract. Historical non-caption outputs are archived under
+`reference/local_legacy` for provenance and are not consumed by those entry
+points.
 
 The C++ simulators use ITensor and retain their original build files/source.
 They are located under `experiments/cbne_moment/simulator` and
-`experiments/ptme/tensor_simulator`. The processed inputs needed to redraw the
-historical PDFs are present. New simulations are required for the strict
-caption-parameter combinations listed in `PARAMETERS.md`.
+`experiments/ptme/tensor_simulator`. Historical processed inputs remain for
+provenance but are not used by maintained entry points. New simulations are
+required for the caption-parameter combinations listed in `PARAMETERS.md`.
 
-## Retained-data differences
+## Archived manuscript/data differences
 
 The maintained default code now follows the manuscript parameter contract. The
 following statements describe only the older data retained for provenance:
@@ -76,7 +76,7 @@ following statements describe only the older data retained for provenance:
    subset, although the caption says 1000 independent trials.
 5. The manuscript `Depol_ent_detect.pdf` visibly uses standard-deviation bands,
    although its caption says standard error. The default code now uses standard
-   error; compatibility mode retains the historical standard-deviation rendering.
+   error. The historical standard-deviation rendering is archived only.
 
 ## Data policy
 

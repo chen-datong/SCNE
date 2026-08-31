@@ -26,5 +26,5 @@ the following useful manuscript-era artifacts are local-only:
 The tracked remote `heisenberg_plot.py` only produces the older five-point
 error-bar plot. This repository adds `heisenberg_depol_paper()` with the
 caption-declared ten-point range, `N_M=10^6`, 1000 trials, and standard-error
-bands. Explicit compatibility mode can still audit the retained PDF's
-standard-deviation rendering.
+bands. The retained standard-deviation rendering is archived under
+`reference/local_legacy` and is not part of an active reproduction path.

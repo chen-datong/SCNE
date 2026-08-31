@@ -13,7 +13,7 @@
 The exact PDFs copied from the manuscript directory are under
 `reference/paper_figures/`. `reference/local_legacy/` contains the older local
 `Depol_ent_detect` plus archived outputs generated from retained non-caption
-parameter subsets.
+parameter subsets. These archives are not consumed by maintained entry points.
 
 The non-numerical `PTME.pdf` protocol/composition figure is excluded. The
 standalone numerical panel that was embedded in it can still be regenerated as
