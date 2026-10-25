@@ -3,9 +3,48 @@ __pycache__/
 .venv/
 venv/
 .pytest_cache/
-experiments/*/figure/*.png
-experiments/*/figure/*.svg
-experiments/*/figures/*.png
 tmp/
-experiments/virtual_cooling/spectra/heisenberg/*.npz
-experiments/virtual_cooling/data/heisenberg/*.csv
+/tests/
+
+# Local tools and caches
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.vscode/
+.idea/
+
+# Compiler outputs
+*.o
+*.obj
+*.exe
+*.a
+*.so
+*.dll
+*.dylib
+.debug_objs/
+/cbne_moment/simulator/main
+/cbne_moment/simulator/main-g
+/ptme/tensor_simulator/main
+/ptme/tensor_simulator/main-g
+
+# Logs, temporary files, and backups
+*.log
+*.pid
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local runtime and generated simulator states
+/cbne_moment/simulator/MPS/
+/ptme/tensor_simulator/MPS/
+/runtime/
+/results/
+
+# Superseded review copy
+/figures/Depol_ent_detect_corrected.pdf
